@@ -86,7 +86,7 @@ class First_of_Vn{
          * */
         void insert_one_set(char * set, int num_of_set){
             for(int i = 0; i < num_of_set; i++){
-                this.insert_one_symbol(set[i]);
+                this->insert_one_symbol(set[i]);
             }
         }
 
@@ -104,7 +104,7 @@ class First_of_Vn{
             return this->Vn;
         }
 
-        void set_Vn(char * Vn){
+        void set_Vn(char Vn){
             this->Vn = Vn;
         }
 
