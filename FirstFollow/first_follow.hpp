@@ -77,8 +77,8 @@ class First_of_Vn{
                 }
             }
             if(flag){
-                first[num_of_first] = symbol;
-                num_of_first++;
+                first[this->num_of_first] = symbol;
+                this->num_of_first++;
             }
         }
         /***
@@ -104,6 +104,14 @@ class First_of_Vn{
             return this->Vn;
         }
 
+        char * get_set(){
+            return this->first;
+        }
+        
+        int get_num_of_first(){
+            return this->num_of_first;
+        }
+
         void set_Vn(char Vn){
             this->Vn = Vn;
         }
@@ -119,8 +127,67 @@ class First_of_Vn{
             cout << "非终结符为:" << this->Vn << endl;
             cout << "First内容为:" << endl;
             for(int i = 0 ; i < this->num_of_first; i++){
-                cout << first[i] << "\r";
+                cout << first[i] << "    ";
             }
             cout << endl;
+        }
+};
+
+class Follow_of_Vn{
+    private:
+        char Vn;
+        char follow[BUFSIZ];
+        int  num_of_follow;
+    public:
+        Follow_of_Vn(char Vn, char * follow, int num_of_follow){
+            this->Vn = Vn;
+            this->num_of_follow = num_of_follow;
+            for(int i = 0; i < num_of_follow; i++){
+                this->follow[i] = follow[i];
+            }
+        }
+
+        void insert_one_symbol(char symbol){
+            bool flag = true;
+            for(int i = 0; i < this->num_of_follow; i++){
+                if(symbol == this->follow[i]){
+                    flag = false;
+                }
+            }
+            if('~' == symbol){
+                flag = false;
+            }
+            if(flag){
+                this->follow[this->num_of_follow] = symbol;
+                this->num_of_follow++;
+                cout << "往:" << this->Vn << "插入符号:" << symbol << endl;
+                cout << "此时num_of_first值为:" << this->num_of_follow << endl;
+            }
+        }
+
+        void insert_one_set(char * set, int num_of_set){
+            for(int i = 0; i < num_of_set; i++){
+                this->insert_one_symbol(set[i]);
+            }
+        }
+
+        void show(){
+            cout << "非终结符:" << this->Vn << "  的follow集为:" << endl;
+            for(int i = 0; i < this->num_of_follow; i++){
+                cout << this->follow[i] << "    ";
+            }
+            cout << endl;
+        }
+
+        char get_Vn(){
+            return this->Vn;
+        }
+
+        int get_num_of_follow(){
+            return this->num_of_follow;
+        }
+
+        char * get_follow(){
+            return this->follow;
         }
 };

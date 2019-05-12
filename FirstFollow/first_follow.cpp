@@ -4,6 +4,10 @@
 using namespace std;
 vector<producer> pro_list;
 vector<First_of_Vn> first_list;
+vector<Follow_of_Vn> follow_list;
+int front_Vn = -1;                          
+//记录上一层求解的是哪一个follow集，防止出现求follow(S)的时候，要先求follow(A)
+//然后程序发现要求follow(A)得先求出follow(S)，从而出现了无限递归的情况.
 
 /**
  * 从pro_list 和 first_list中查找某个字符对应的producer和first的下标,
@@ -13,8 +17,8 @@ vector<First_of_Vn> first_list;
 int find_Vn_from_vector(char Vn){       
     int len = pro_list.size();
     for(int i = 0; i < len; i++){
-        char temp_str = pro_list[i].get_left();
-        if(temp_str == Vn){
+        char temp_char = pro_list[i].get_left();
+        if(temp_char == Vn){
             return i;
         }
     }
@@ -55,15 +59,18 @@ void list_init(){
         int length = temp_input.length();
         temp_input = temp_input.substr(3,length);
         splitString(temp_input, temp_right, "|");
-        producer    temp_pro(left, temp_right);
-        First_of_Vn temp_first(left, NULL, 0);
+        producer     temp_pro(left, temp_right);
+        First_of_Vn  temp_first(left, NULL, 0);
+        Follow_of_Vn temp_follow(left, NULL, 0);
         pro_list.push_back(temp_pro);
         first_list.push_back(temp_first);
+        follow_list.push_back(temp_follow);
     }
+    follow_list[0].insert_one_symbol('$');
 }
 
 void show_pro_vector(){
-    cout << "展示变量:" << endl;
+    cout << "展示输入的产生式:" << endl;
     int length = pro_list.size();
     for(int i = 0; i < length; i++){
         pro_list[i].show();
@@ -78,6 +85,14 @@ void show_first_vector(){
     }
 }
 
+void show_follow_vector(){
+    cout << "展示follow集合:" << endl;
+    int length = follow_list.size();
+    for(int i = 0; i < length; i++){
+        follow_list[i].show();
+    }
+}
+
 void First(producer & pro1, First_of_Vn& first1){
     if(pro1.get_left() != first1.get_Vn()){
         perror("函数调用异常!!!产生式的左部与需要传入的first集的Vn不相等!!");
@@ -89,9 +104,10 @@ void First(producer & pro1, First_of_Vn& first1){
     for(int i = 0; i < num_of_set; i++){
         string temp_str = temp_set[i];
         int    len      = temp_str.length();
-        bool   flag_ex  = true;                                                     //判断求得的子first集中是否有空集，如果有则退出循环。
-        if((temp_str[0] >= 'a' && temp_str[0] <= 'z') | (temp_str[0] == '~')){
+        bool   flag_ex  = false;                                                     //判断求得的子first集中是否有空集，如果有则退出循环。
+        if((temp_str[0] >= 'a' && temp_str[0] <= 'z') | (temp_str[0] == '~') | (temp_str[0] == '+') | (temp_str[0] == '-') | (temp_str[0] = '*') | (temp_str[0] == '/') | (temp_str[0] == '(') | (temp_str[0] == ')') ){
             first1.insert_one_symbol(temp_str[0]);
+            //cout << "添加一个符号:" << temp_str[0] << endl;
         }else if((temp_str[0] >= 'A' && temp_str[0] <= 'Z')){
             for(int i = 0; i < len; i++){
                 char temp_char = temp_str[i];
@@ -99,9 +115,10 @@ void First(producer & pro1, First_of_Vn& first1){
                 if(-1 == fix){
                     perror("查找list失败,不执行递归操作!!");
                 }else{
-                    First(pro_list[i], first_list[i]);
-                    flag_ex = first_list[i].whether_empty_exists();                    //求得的子first集合中存在空集，因此继续取下一个字符。
-                    if(!flag_ex){
+                    First(pro_list[fix], first_list[fix]);
+                    first1.insert_one_set(first_list[fix].get_set(), first_list[fix].get_num_of_first());
+                    flag_ex = !(first_list[fix].whether_empty_exists());                    //求得的子first集合中存在空集，因此继续取下一个字符。
+                    if(flag_ex){
                         break;
                     }
                 }
@@ -110,13 +127,67 @@ void First(producer & pro1, First_of_Vn& first1){
     }
 }
 
+int Follow(Follow_of_Vn follow1){
+    char Vn = follow1.get_Vn();
+    int  len_of_pro = pro_list.size();
+    for(int i = 0; i < len_of_pro; i++){
+        int num_of_right = pro_list[i].get_rightnum();
+        //char temp_left   = pro_list[i].get_left();
+        string * right     = pro_list[i].get_right();
+        for(int j = 0; j < num_of_right; j++){
+            int len_of_str  = right[j].length();
+            string temp_str = right[j];
+            for(int r = 0; r < len_of_str; r++){
+                if(temp_str[r] == Vn){
+                    if('\0' == temp_str[r+1]){
+                        if(i != front_Vn){
+                            front_Vn = i;
+                            Follow(follow_list[i]);
+                            follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
+                            //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
+                        }else{
+                            return 0;
+                        }  
+                    }else if(temp_str[r+1] >= 'a' && temp_str[r+1] <= 'z'){
+                        follow1.insert_one_symbol(temp_str[r+1]);
+                    }else if(temp_str[r+1] >= 'A' && temp_str[r+1] <= 'Z'){
+                        int fix = find_Vn_from_vector(temp_str[r+1]);
+                        if(-1 != fix){
+                            follow1.insert_one_set(first_list[fix].get_set(), first_list[fix].get_num_of_first());
+                            bool flag_empty = first_list[fix].whether_empty_exists();
+                            if(flag_empty){
+                                if(i != front_Vn){
+                                    front_Vn = i;
+                                    Follow(follow_list[i]);
+                                    follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
+                                    //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
+                                }else{
+                                    return 0;
+                                }
+                            }
+                        }
+                        
+                    }
+
+                    
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
 int main(int argc, char * argv[]){
     list_init();
     int length = pro_list.size();
     for(int i = 0; i < length; i++){
         First(pro_list[i], first_list[i]);
     }
-    show_pro_vector();
+    for(int i = 0; i < length; i++){
+        Follow(follow_list[i]);
+    }
     show_first_vector();
+    show_follow_vector();
     return 0;
 }
