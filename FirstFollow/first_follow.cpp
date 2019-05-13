@@ -152,10 +152,7 @@ int Follow(Follow_of_Vn& follow1){
                         if(i != front_Vn){
                             front_Vn = fix_ed;
                             int return_of_follow = Follow(follow_list[i]);
-                            //if(-1 == return_of_follow){
-                                follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
-                                //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
-                            //}
+                            follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
                         }else{
                             return -1;
                         }  
@@ -170,9 +167,7 @@ int Follow(Follow_of_Vn& follow1){
                                 if(i != front_Vn){
                                     front_Vn = fix_ed;
                                     int return_of_follow = Follow(follow_list[i]);
-                                    if(-1 == return_of_follow)
-                                        follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
-                                        //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
+                                    follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
                                 }else{
                                     return -1;
                                 }
