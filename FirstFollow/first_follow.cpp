@@ -5,7 +5,8 @@ using namespace std;
 vector<producer> pro_list;
 vector<First_of_Vn> first_list;
 vector<Follow_of_Vn> follow_list;
-int front_Vn = -1;                          
+int front_Vn = -1;
+int * userd;                       
 //记录上一层求解的是哪一个follow集，防止出现求follow(S)的时候，要先求follow(A)
 //然后程序发现要求follow(A)得先求出follow(S)，从而出现了无限递归的情况.
 
@@ -48,6 +49,10 @@ void list_init(){
     cout << "接下来按照输入初始化list" << endl;
     cout << "输入要构建的producer的个数:" << endl;
     cin >> num_of_list;
+    userd = new int[num_of_list];
+    for(int i = 0; i < num_of_list; i++){
+        userd[i] = 1;
+    }
     cout << "输入产生式('~'表示空集):" << endl;
     for(int i = 0; i < num_of_list; i++){
         char left;
@@ -91,6 +96,7 @@ void show_follow_vector(){
     for(int i = 0; i < length; i++){
         follow_list[i].show();
     }
+    delete [] userd;
 }
 
 void First(producer & pro1, First_of_Vn& first1){
@@ -105,7 +111,7 @@ void First(producer & pro1, First_of_Vn& first1){
         string temp_str = temp_set[i];
         int    len      = temp_str.length();
         bool   flag_ex  = false;                                                     //判断求得的子first集中是否有空集，如果有则退出循环。
-        if((temp_str[0] >= 'a' && temp_str[0] <= 'z') | (temp_str[0] == '~') | (temp_str[0] == '+') | (temp_str[0] == '-') | (temp_str[0] = '*') | (temp_str[0] == '/') | (temp_str[0] == '(') | (temp_str[0] == ')') ){
+        if((temp_str[0] >= 'a' && temp_str[0] <= 'z') | (temp_str[0] == '~')){
             first1.insert_one_symbol(temp_str[0]);
             //cout << "添加一个符号:" << temp_str[0] << endl;
         }else if((temp_str[0] >= 'A' && temp_str[0] <= 'Z')){
@@ -127,12 +133,15 @@ void First(producer & pro1, First_of_Vn& first1){
     }
 }
 
-int Follow(Follow_of_Vn follow1){
-    char Vn = follow1.get_Vn();
+int Follow(Follow_of_Vn& follow1){
+    char Vn         = follow1.get_Vn();
     int  len_of_pro = pro_list.size();
+    int  fix_ed     = find_Vn_from_vector(Vn);
+    if(-1 == userd[fix_ed]){
+        return -1;
+    }
     for(int i = 0; i < len_of_pro; i++){
         int num_of_right = pro_list[i].get_rightnum();
-        //char temp_left   = pro_list[i].get_left();
         string * right     = pro_list[i].get_right();
         for(int j = 0; j < num_of_right; j++){
             int len_of_str  = right[j].length();
@@ -141,12 +150,14 @@ int Follow(Follow_of_Vn follow1){
                 if(temp_str[r] == Vn){
                     if('\0' == temp_str[r+1]){
                         if(i != front_Vn){
-                            front_Vn = i;
-                            Follow(follow_list[i]);
-                            follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
-                            //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
+                            front_Vn = fix_ed;
+                            int return_of_follow = Follow(follow_list[i]);
+                            //if(-1 == return_of_follow){
+                                follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
+                                //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
+                            //}
                         }else{
-                            return 0;
+                            return -1;
                         }  
                     }else if(temp_str[r+1] >= 'a' && temp_str[r+1] <= 'z'){
                         follow1.insert_one_symbol(temp_str[r+1]);
@@ -157,12 +168,13 @@ int Follow(Follow_of_Vn follow1){
                             bool flag_empty = first_list[fix].whether_empty_exists();
                             if(flag_empty){
                                 if(i != front_Vn){
-                                    front_Vn = i;
-                                    Follow(follow_list[i]);
-                                    follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
-                                    //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
+                                    front_Vn = fix_ed;
+                                    int return_of_follow = Follow(follow_list[i]);
+                                    if(-1 == return_of_follow)
+                                        follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
+                                        //若A->aB 或A->aBc,且 c->* ~（即~ 属于FIRST(c)）,则将 FOLLOW(A)加入FOLLOW(B)中（此处a可以为空）。
                                 }else{
-                                    return 0;
+                                    return -1;
                                 }
                             }
                         }
@@ -184,10 +196,12 @@ int main(int argc, char * argv[]){
     for(int i = 0; i < length; i++){
         First(pro_list[i], first_list[i]);
     }
-    for(int i = 0; i < length; i++){
-        Follow(follow_list[i]);
-    }
     show_first_vector();
+    for(int i = 0; i < length; i++){
+        front_Vn = -1;
+        Follow(follow_list[i]);
+        userd[i] = -1;
+    }
     show_follow_vector();
     return 0;
 }

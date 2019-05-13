@@ -3,7 +3,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
-#define Bufsize 50
+#define Bufsize 10
 using namespace std;
 class producer{
     private:
@@ -160,8 +160,6 @@ class Follow_of_Vn{
             if(flag){
                 this->follow[this->num_of_follow] = symbol;
                 this->num_of_follow++;
-                cout << "往:" << this->Vn << "插入符号:" << symbol << endl;
-                cout << "此时num_of_first值为:" << this->num_of_follow << endl;
             }
         }
 
