@@ -138,7 +138,7 @@ int Follow(Follow_of_Vn& follow1){
     int  len_of_pro = pro_list.size();
     int  fix_ed     = find_Vn_from_vector(Vn);
     if(-1 == userd[fix_ed]){
-        return -1;
+        return -2;
     }
     for(int i = 0; i < len_of_pro; i++){
         int num_of_right = pro_list[i].get_rightnum();
@@ -152,7 +152,11 @@ int Follow(Follow_of_Vn& follow1){
                         if(i != front_Vn){
                             front_Vn = fix_ed;
                             int return_of_follow = Follow(follow_list[i]);
-                            follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
+                            if(-2 == return_of_follow){
+                                follow1.set_follow(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
+                            }else{
+                                follow1.insert_one_set(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
+                            }
                         }else{
                             return -1;
                         }  
@@ -167,7 +171,11 @@ int Follow(Follow_of_Vn& follow1){
                                 if(i != front_Vn){
                                     front_Vn = fix_ed;
                                     int return_of_follow = Follow(follow_list[i]);
-                                    follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
+                                    if(-2 == return_of_follow){
+                                        follow1.set_follow(follow_list[i].get_follow(), follow_list[i].get_num_of_follow());
+                                    }else{
+                                        follow1.insert_one_set(follow_list[i].get_follow(),follow1.get_num_of_follow());
+                                    }
                                 }else{
                                     return -1;
                                 }
@@ -192,10 +200,14 @@ int main(int argc, char * argv[]){
         First(pro_list[i], first_list[i]);
     }
     show_first_vector();
+    //update 和求解 follow 不能放在一个循环中完成。否则会出现更新不完全的情况。。
     for(int i = 0; i < length; i++){
         front_Vn = -1;
         Follow(follow_list[i]);
         userd[i] = -1;
+    }
+    for(int i = 0; i < length; i++){
+        follow_list[i].update_the_follow();
     }
     show_follow_vector();
     return 0;

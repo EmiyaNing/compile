@@ -136,12 +136,13 @@ class First_of_Vn{
 class Follow_of_Vn{
     private:
         char Vn;
-        char follow[BUFSIZ];
+        char * follow;
         int  num_of_follow;
     public:
         Follow_of_Vn(char Vn, char * follow, int num_of_follow){
             this->Vn = Vn;
             this->num_of_follow = num_of_follow;
+            this->follow = new char [BUFSIZ];
             for(int i = 0; i < num_of_follow; i++){
                 this->follow[i] = follow[i];
             }
@@ -175,6 +176,20 @@ class Follow_of_Vn{
                 cout << this->follow[i] << "    ";
             }
             cout << endl;
+        }
+
+        void set_follow(char * follow, int num_of_follow){
+            delete [] this->follow;
+            this->num_of_follow = num_of_follow;
+            this->follow = follow;
+        }
+
+        void update_the_follow(){
+            int count = 0;
+            while(this->follow[count] != 0){
+                count++;
+            }
+            this->num_of_follow = count;
         }
 
         char get_Vn(){
