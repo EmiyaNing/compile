@@ -86,7 +86,8 @@ class First_of_Vn{
          * */
         void insert_one_set(char * set, int num_of_set){
             for(int i = 0; i < num_of_set; i++){
-                this->insert_one_symbol(set[i]);
+                if('~' != set[i])
+                    this->insert_one_symbol(set[i]);
             }
         }
 
