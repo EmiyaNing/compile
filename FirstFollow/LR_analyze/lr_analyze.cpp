@@ -4,6 +4,7 @@
 #include <cstring>
 #include <sstream>
 #include "LR.hpp"
+#include <stack>
  
 using namespace std;
  
@@ -15,6 +16,7 @@ vector<char> sign;
 vector<char> inputStr;
 
 vector<int> value;
+stack<int> value_stack;
 //定义文法
 Grammar grammar;
 //定义LR分析表
@@ -33,21 +35,42 @@ int main()
     return 0;
 }
 
-int caculate_the_value(int number){
-    int end_of_value = value.size();
+int caculate_the_value(int number,int popnumber){
     int result = 0;
+    int temp_num1 = 0;
+    int temp_num2 = 0;
     if(number == 1){
-        result = value[0] + value[2];
+        //result = value[top] + value[top+2];
+        temp_num1 = value_stack.top();
+        value_stack.pop();
+        value_stack.pop();
+        temp_num2 = value_stack.top();
+        value_stack.pop();
+        result = temp_num1 + temp_num2;
     }else if(number == 2){
-        result = value[0];
+        //result = value[top];
+        result = value_stack.top();
+        value_stack.pop();
     }else if(number == 3){
-        result = value[0] * value[2];
+        temp_num1 = value_stack.top();
+        value_stack.pop();
+        value_stack.pop();
+        temp_num2 = value_stack.top();
+        value_stack.pop();
+        result = temp_num1 * temp_num2;
+        //result = value[top] * value[top + 2];
     }else if(number == 4){
-        result = value[0];
+        //result = value[top];
+        result = value_stack.top();
+        value_stack.pop();
     }else if(number == 5){
-        result = value[1];
+        //result = value[top + 1];
+        result = value_stack.top();
+        value_stack.pop();
     }else{
-        result = value[0];
+        //result = value[top];
+        result = value_stack.top();
+        value_stack.pop();
     }
     return result;
 }
@@ -163,6 +186,8 @@ void LRAnalyse(){
             inputStr.erase(inputStr.begin());
             //将状态数字入栈
             status.push_back(s);
+            value_stack.push(value[0]);
+            value.erase(value.begin());
         }
         //如果是归约
         else if(str.substr(0,1) == "r"){
@@ -192,19 +217,20 @@ void LRAnalyse(){
             //查找goto之后得到的需要压入状态栈的状态。。。
             s = analyseTable.goTo[oldStatus][analyseTable.getNonTerminalIndex(nonTerCh)];
             cout<<setw(10)<<step<<setw(10)<<vectTrancStr(0)<<setw(10)<<vectTrancStr(1)<<setw(10)<<vectTrancStr(3)<<setw(10)<<vectTrancStr(2)<<setw(10)<<"r"<<r<<(string)":"+grammar.formula[r]+(string)"归约,GOTO{"<<oldStatus<<","<<nonTerCh<<"}="<<s<<"入栈"<<endl;
-            int result = caculate_the_value(r);
+            int result = caculate_the_value(r,popCount);
             //对符号栈进行出栈和状态栈进行出栈
             for(int i=0 ;i< popCount;i++){
                 sign.pop_back();
                 status.pop_back();
-                value.erase(value.begin());
+                //value_stack.pop();
             }
             //再对产生式的开始符号入栈
             sign.push_back(nonTerCh);
             //再把新的状态入栈
             status.push_back(s);
             //在把新的结果入栈
-            value.insert(value.begin(),result);
+            //value.insert(value.begin(),result);
+            value_stack.push(result);
             
         }
         else{
@@ -219,5 +245,5 @@ void LRAnalyse(){
         ch = inputStr.front();
     }
     cout<<setw(10)<<step<<setw(10)<<vectTrancStr(0)<<setw(10)<<vectTrancStr(1)<<setw(10)<<vectTrancStr(3)<<setw(10)<<vectTrancStr(2)<<setw(10)<<"A"<<"cc:分析成功"<<endl;
-    cout<<"分析结果是:"<<setw(10)<<vectTrancStr(3)<<endl;
+    cout<<"分析结果是:"<<setw(10)<<value_stack.top()<<endl;
 }
